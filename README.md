@@ -377,27 +377,27 @@ These are to be bit-wise ORed together when setting the config of the LCD.
 
 | Flag | Behavior |
 | --- | --- |
-| LCD_DEC | Decrement RAM address on write |
-| LCD_INC | Increment RAM address on write |
-| LCD_NOSHIFT | Do not shift display on write |
-| LCD_SHIFT | Shift display on write, keeping the cursor stationary |
+| `LCD_DEC` | Decrement RAM address on write |
+| `LCD_INC` | Increment RAM address on write |
+| `LCD_NOSHIFT` | Do not shift display on write |
+| `LCD_SHIFT` | Shift display on write, keeping the cursor stationary |
 
 ##### Function Set
 
 | Flag | Behavior |
 | --- | --- |
-| LCD_4bit | Enable 4 data bit mode |
-| LCD_8bit | Enable 8 data bit mode |
-| LCD_FONT_5x8 | Enables 5x8 fonts; needed for 2 line mode |
-| LCD_FONT_5x11 | Enables 5x11 fonts; 1 or 2 line mode |
+| `LCD_4bit` | Enable 4 data bit mode |
+| `LCD_8bit` | Enable 8 data bit mode |
+| `LCD_FONT_5x8` | Enables 5x8 fonts; needed for 2 line mode |
+| `LCD_FONT_5x11` | Enables 5x11 fonts; 1 or 2 line mode |
 
 ##### Default Configs
 
 | Flag | Behavior |
 | --- | --- |
-| LCD_DEFAULT_I2C | Sets commonly needed bits for I2C usage |
-| LCD_DEFAULT_SPI | NOT IMPLEMENTED |
-| LCD_DEFAULT_GPIO | NOT IMPLEMENTED |
+| `LCD_DEFAULT_I2C` | Sets commonly needed bits for I2C usage |
+| `LCD_DEFAULT_SPI` | NOT IMPLEMENTED |
+| `LCD_DEFAULT_GPIO` | NOT IMPLEMENTED |
 
 ------
 
