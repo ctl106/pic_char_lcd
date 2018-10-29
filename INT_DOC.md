@@ -78,21 +78,6 @@ as determined by the line mode and size of display.
 Returns `0` for False if `addr` is not valid and non-`0` for True if `addr` is valid.
 
 ------
-##### `lcd_is_busy`
-````c
-int lcd_is_busy(lcd *dev);
-````
-
-CANDIDATE FOR REMOVAL from the public API as there is no use for this
-function beyond implementing the other API functions.
-
-###### Behavior
-Queries `dev` to see whether or not is busy executing a previous command.
-
-###### Returns
-Returns `0` for False if `dev` is not busy and non-`0` if  it is busy.
-
-------
 ##### `lcd_move_cursor`
 ````c
 int lcd_move_cursor(lcd *dev, uint8_t row, uint8_t col);

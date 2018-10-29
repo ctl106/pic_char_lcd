@@ -56,6 +56,7 @@ static void command_4bit(lcd *dev);	// 4bit interface to LCD
 static void	default_i2c_map(lcd_map map);
 static void	init_4bit(lcd *dev);
 static void	init_8bit(lcd *dev);
+static int	is_busy(lcd *dev);
 static int	is_map_valid(uint8_t mode, lcd_map map);
 static void	map_message(lcd *dev, message msg);	// for non-GPIO interfaces
 static void	unmap_message(lcd *dev, message msg);
@@ -90,7 +91,7 @@ static void	send_byte(lcd *dev, uint8_t data);
 
 void lcd_clear(lcd *dev)
 {
-	while(lcd_is_busy(dev));
+	while(is_busy(dev));
 	clear_display(dev);
 }
 
@@ -106,7 +107,7 @@ char lcd_create_char(lcd *dev, uint8_t addr, uint8_t bitmap[8])
 	set_cgram_addr(dev, addr<<3);
 	int i=0;
 	for(i=0; i<8; i++) {
-		while(lcd_is_busy(dev));
+		while(is_busy(dev));
 		write_to_ram(dev, bitmap[i]);
 	}
 	
@@ -119,7 +120,7 @@ char lcd_create_char(lcd *dev, uint8_t addr, uint8_t bitmap[8])
 uint8_t lcd_current_addr(lcd *dev)
 {
 	uint8_t pos;
-	while(lcd_is_busy(dev));
+	while(is_busy(dev));
 	read_busy_addr(dev, NULL, &pos);
 	return pos;
 }
@@ -185,13 +186,6 @@ int lcd_is_addr_valid(lcd *dev, uint8_t addr)
 		status = 0;
 	
 	return status;
-}
-
-int lcd_is_busy(lcd *dev)
-{
-	uint8_t busy;
-	read_busy_addr(dev, &busy, NULL);
-	return (int)busy;
 }
 
 int lcd_move_cursor(lcd *dev, uint8_t row, uint8_t col)
@@ -270,7 +264,7 @@ size_t lcd_read(lcd *dev, void *buf, size_t cnt)
 void lcd_read_byte(lcd *dev, uint8_t *data)
 {
 	int status = 0;
-	while(lcd_is_busy(dev));
+	while(is_busy(dev));
 	read_from_ram(dev, &data);
 	return status;
 }
@@ -369,7 +363,7 @@ int lcd_set_addr(lcd *dev, uint8_t addr)
 	int status = 0;
 	
 	if (lcd_is_addr_valid(dev, addr)) {
-		while(lcd_is_busy(dev));
+		while(is_busy(dev));
 		set_ddram_addr(dev, addr);
 	} else
 		status = -1;
@@ -404,7 +398,7 @@ void lcd_write_byte(lcd *dev, uint8_t data)
 			line %= dev->lines;
 	}
 	
-	while(lcd_is_busy(dev));
+	while(is_busy(dev));
 	write_to_ram(dev, data);
 	
 	if (line >= 0)
@@ -684,6 +678,13 @@ static void init_8bit(lcd *dev)
 	__delay_us(lcd_setup_time2);
 	
 	function_set(dev, LCD_8BIT, 0, 0);
+}
+
+int is_busy(lcd *dev)
+{
+	uint8_t busy;
+	read_busy_addr(dev, &busy, NULL);
+	return (int)busy;
 }
 
 static int is_map_valid(uint8_t mode, lcd_map map)

@@ -1,10 +1,17 @@
 /* 
 
  File:		pic_char_lcd.h
- Author:		Champagne Lewis
+ Author:	Champagne Lewis
 
  Comment:	
 
+*/
+
+/*
+ This software is released under GNU GPL Version 3
+
+ You should have received a copy of the GNU General Public License along with
+ this program (README.md).  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #ifndef PIC_CHAR_LCD_H
@@ -144,7 +151,6 @@ void	lcd_write_byte(lcd *dev, uint8_t data);
 
 // Helper functions
 int		lcd_is_addr_valid(lcd *dev, uint8_t addr);
-int		lcd_is_busy(lcd *dev);
 char	lcd_create_char(lcd *dev, uint8_t addr, uint8_t bitmap[8]);
 
 #ifdef __cplusplus
