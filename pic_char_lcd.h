@@ -118,20 +118,34 @@ FILE *lcd_open(lcd *dev);
  they already know how to use similar functions in stdio.h.
 */
 
+// Display control functions
 void	lcd_clear(lcd *dev);
-char	lcd_create_char(lcd *dev, uint8_t addr, uint8_t bitmap[8]);
 uint8_t	lcd_current_addr(lcd *dev);
+void	lcd_home(lcd *dev);
 int		lcd_init(lcd *dev);
-int		lcd_is_addr_valid(lcd *dev, uint8_t addr);
-int		lcd_is_busy(lcd *dev);
 int		lcd_move_cursor(lcd *dev, uint8_t row, uint8_t col);
+int		lcd_set_addr(lcd *dev, uint8_t addr);
+
+int		lcd_is_backlight(lcd *dev);
+void	lcd_set_backlight(lcd *dev, int status);
+int		lcd_is_blink(lcd *dev);
+void	lcd_set_blink(lcd *dev, int status);
+int		lcd_is_cursor(lcd *dev);
+void	lcd_set_cursor(lcd *dev, int status);
+int		lcd_is_display(lcd *dev);
+void	lcd_set_display(lcd *dev, int status);
+
+// System call-like functions
 size_t	lcd_read(lcd *dev, void *buf, size_t cnt);
 void 	lcd_read_byte(lcd *dev, uint8_t *data);
 int		lcd_seek(lcd *dev, int offset, int whence);
-int		lcd_set_addr(lcd *dev, uint8_t addr);
 size_t	lcd_write(lcd *dev, void *buf, size_t cnt);
 void	lcd_write_byte(lcd *dev, uint8_t data);
 
+// Helper functions
+int		lcd_is_addr_valid(lcd *dev, uint8_t addr);
+int		lcd_is_busy(lcd *dev);
+char	lcd_create_char(lcd *dev, uint8_t addr, uint8_t bitmap[8]);
 
 #ifdef __cplusplus
 }
