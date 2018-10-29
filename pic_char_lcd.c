@@ -65,6 +65,7 @@ static void	read_4bit(lcd *dev, uint8_t *data);
 static void	write_4bit(lcd *dev, uint8_t data);
 static void	reset_values(lcd *dev);	// set data, rs, and rw to 0
 static void	send_byte(lcd *dev, uint8_t data);
+static void	set_v0(lcd *dev, int status);
 
 
 /*
@@ -186,6 +187,26 @@ int lcd_is_addr_valid(lcd *dev, uint8_t addr)
 		status = 0;
 	
 	return status;
+}
+
+int lcd_is_backlight(lcd *dev)
+{
+	return lcd->config & LCD_BACKLIGHT;
+}
+
+int lcd_is_blink(lcd *dev)
+{
+	return lcd->config & LCD_BLINK;
+}
+
+int lcd_is_cursor(lcd *dev)
+{
+	return lcd->config & LCD_CURSOR;
+}
+
+int lcd_is_display(lcd *dev)
+{
+	return lcd->config & LCD_DISPLAY;
 }
 
 int lcd_move_cursor(lcd *dev, uint8_t row, uint8_t col)
@@ -369,6 +390,58 @@ int lcd_set_addr(lcd *dev, uint8_t addr)
 		status = -1;
 	
 	return status;
+}
+
+void lcd_set_backlight(lcd *dev, int status)
+{
+	while(is_busy(dev));
+	if(status)
+		lcd->config != LCD_BACKLIGHT;
+	else
+		lcd->config &= ~LCD_BACKLIGHT;
+	set_v0(status);
+}
+
+void lcd_set_blink(lcd *dev, int status)
+{
+	uint8_t display, cursor;
+	display = dev->config | LCD_DISPLAY;
+	cursor = dev->config | LCD_CURSOR;
+	
+	if (status)
+		dev->config |= LCD_BLINK;
+	else
+		dev->config &= ~LCD_BLINK;
+	
+	disp_on_off(dev, display, cursor, (uint8_t)status);
+}
+
+void lcd_set_cursor(lcd *dev, int status)
+{
+	uint8_t blink, display;
+	blink = dev->config | LCD_BLINK;
+	display = dev->config | LCD_DISPLAY;
+	
+	if (status)
+		dev->config |= LCD_CURSOR;
+	else
+		dev->config &= ~LCD_CURSOR;
+	
+	disp_on_off(dev, display, (uint8_t)status, blink);
+}
+
+void lcd_set_display(lcd *dev, int status)
+{
+	uint8_t blink, cursor;
+	blink = dev->config | LCD_BLINK;
+	cursor = dev->config | LCD_CURSOR;
+	
+	if (status)
+		dev->config |= LCD_DISPLAY;
+	else
+		dev->config &= ~LCD_DISPLAY;
+	
+	disp_on_off(dev, (uint8_t)status, cursor, blink);
 }
 
 size_t lcd_write(lcd *dev, void *buf, size_t cnt)
@@ -801,6 +874,17 @@ static void send_byte(lcd *dev, uint8_t data)
 		write1I2C1(dev->address, data);
 	else if(dev->interface == lcd_i2c2)
 		write1I2C2(dev->address, data);
+}
+
+static void set_v0(lcd *dev, int status)
+{
+	uint8_t data;
+	read_4bit(lcd *dev, &data);
+	if(status)
+		data |= dev->v0;
+	else
+		data &= ~dev->v0;
+	send_byte(dev, &data);	// doesn't toggle e like write_4bit; this is desired
 }
 
 
