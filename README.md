@@ -48,6 +48,7 @@ functionality can be easily tested via simulation in the MPLAB X IDE so that
 a physical device with connected peripherals is not required. A macro should be
 defined that will allow the test code to run on physical hardware instead of
 only relying on the simulated device to test the functionality.
+
 ------
 
 ### API
