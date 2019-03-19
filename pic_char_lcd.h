@@ -19,6 +19,8 @@
 
 #include <xc.h>
 
+#include <stdlib.h>
+
 
 /*		CONFIGURATION FLAGS		*/
 // entry mode
@@ -111,7 +113,7 @@ typedef struct lcd
 
 
 // new interface using FILE objects
-FILE *lcd_open(lcd *dev);
+//FILE *lcd_open(lcd *dev);
 
 
 // old interface not using FILE objects

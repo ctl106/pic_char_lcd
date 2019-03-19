@@ -1,10 +1,11 @@
 #include <xc.h>
-#include <libpic30.h>	// __delay_us()
+//#include <libpic30.h>	// __delay_us()
 #include <stdarg.h>		// va_arg
 #include <stdio.h>		// vsnprintf()
 
 // #ifdef macro to determine library to include
 #include "lib/pic24/include/pic24_i2c.h"
+#include "lib/pic24/include/pic24_delay.h"
 
 // #endif
 
@@ -278,16 +279,16 @@ size_t lcd_read(lcd *dev, void *buf, size_t cnt)
 {
 	uint8_t total;
 	for(total = 0; total < cnt && at_eof(dev); total++)
-		lcd_read_byte(dev, ((char*)buf)+total);
+		lcd_read_byte(dev, ((uint8_t*)buf)+total);
 	return total;
 }
 
 void lcd_read_byte(lcd *dev, uint8_t *data)
 {
-	int status = 0;
+	//int status = 0;
 	while(is_busy(dev));
-	read_from_ram(dev, &data);
-	return status;
+	read_from_ram(dev, data);
+	//return status;
 }
 
 int lcd_seek(lcd *dev, int offset, int whence)	// NOT DONE; need a more elegant solution...
@@ -396,10 +397,10 @@ void lcd_set_backlight(lcd *dev, int status)
 {
 	while(is_busy(dev));
 	if(status)
-		dev->config != LCD_BACKLIGHT;
+		dev->config |= LCD_BACKLIGHT;
 	else
 		dev->config &= ~LCD_BACKLIGHT;
-	set_v0(status);
+	set_v0(dev, status);
 }
 
 void lcd_set_blink(lcd *dev, int status)
@@ -728,13 +729,13 @@ static void init_4bit(lcd *dev)
 	map_message(dev, msg);
 	
 	write_4bit(dev, msg.part1);
-	__delay_us(lcd_setup_time1);
+	DELAY_US(lcd_setup_time1);
 	
 	write_4bit(dev, msg.part1);
-	__delay_us(lcd_setup_time1);
+	DELAY_US(lcd_setup_time1);
 	
 	write_4bit(dev, msg.part1);
-	__delay_us(lcd_setup_time2);
+	DELAY_US(lcd_setup_time2);
 	
 	// aaand finally set to 4bit mode
 	dev->data = 0x20 | LCD_4BIT;
@@ -745,10 +746,10 @@ static void init_4bit(lcd *dev)
 static void init_8bit(lcd *dev)
 {
 	function_set(dev, LCD_8BIT, 0, 0);
-	__delay_us(lcd_setup_time1);
+	DELAY_US(lcd_setup_time1);
 	
 	function_set(dev, LCD_8BIT, 0, 0);
-	__delay_us(lcd_setup_time2);
+	DELAY_US(lcd_setup_time2);
 	
 	function_set(dev, LCD_8BIT, 0, 0);
 }
@@ -850,15 +851,15 @@ static void write_4bit(lcd *dev, uint8_t data)
 {
 	data &= ~dev->e;
 	send_byte(dev, data);
-	__delay_us(lcd_enable_time1);
+	DELAY_US(lcd_enable_time1);
 	
 	data |= dev->e;
 	send_byte(dev, data);
-	__delay_us(lcd_enable_time1);
+	DELAY_US(lcd_enable_time1);
 	
 	data &= ~dev->e;
 	send_byte(dev, data);
-	__delay_us(lcd_enable_time2);
+	DELAY_US(lcd_enable_time2);
 }
 
 static void reset_values(lcd *dev)
@@ -879,12 +880,12 @@ static void send_byte(lcd *dev, uint8_t data)
 static void set_v0(lcd *dev, int status)
 {
 	uint8_t data;
-	read_4bit(lcd *dev, &data);
+	read_4bit(dev, &data);
 	if(status)
 		data |= dev->v0;
 	else
 		data &= ~dev->v0;
-	send_byte(dev, &data);	// doesn't toggle e like write_4bit; this is desired
+	send_byte(dev, data);	// doesn't toggle e like write_4bit; this is desired
 }
 
 
