@@ -128,6 +128,12 @@ uint8_t lcd_current_addr(lcd *dev)
 	return pos;
 }
 
+void lcd_home(lcd *dev)
+{
+	while(is_busy(dev));
+    return_home(dev);
+}
+
 int lcd_init(lcd *dev)
 {
 	/*
@@ -843,9 +849,9 @@ static void unmap_message(lcd *dev, message msg)
 static void read_4bit(lcd *dev, uint8_t *data)
 {
 	if(dev->interface == lcd_i2c1)
-		read1I2C1(dev->address, data);
+		read1I2C1((dev->address << 1) + 1, data);
 	else if(dev->interface == lcd_i2c2)
-		read1I2C2(dev->address, data);
+		read1I2C2((dev->address << 1) + 1, data);
 }
 
 static void write_4bit(lcd *dev, uint8_t data)
@@ -873,9 +879,9 @@ static void reset_values(lcd *dev)
 static void send_byte(lcd *dev, uint8_t data)
 {
 	if(dev->interface == lcd_i2c1)
-		write1I2C1(dev->address, data);
+		write1I2C1(dev->address << 1, data);
 	else if(dev->interface == lcd_i2c2)
-		write1I2C2(dev->address, data);
+		write1I2C2(dev->address << 1, data);
 }
 
 static void set_v0(lcd *dev, int status)

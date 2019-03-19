@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include "pic24_unions.h"
 #include "pic24_chip.h"
+#include "pic24_clockfreq.h"
 
 // Only include if this ECAN Module exists.
 #if (NUM_ECAN_MODS >= 1)
@@ -53,16 +54,41 @@
 #define ECAN_MODE_CONFIGURE 4
 #define ECAN_LISTEN_ALL_MESSAGES 7
 
-// Deprecated & Removed from PIC24 Datasheet - rnn13
+// CANCKS in CiCTRL1 ECAN Register
+// CANCKS: ECANx Module Clock (FCAN) Source Select Bit
+//
+// The CANCKS bit was defined in the CiCTRL1 register when the initial PIC24
+// library and text was written (2008).  The following definitions were used
+// for the CANCKS bit.  In May 2009, datasheet revision history says
+//      Changed bit 11 in the ECAN Control Register 1 (CiCTRL1) to Reserved
+//      (see Register 19-1).
+// Thus, these definitions are no longer needed in the non-E families of the
+// PIC24/dsPIC   [JWB May 2014]
 //#define ECAN_FCAN_IS_FCY 1
 //#define ECAN_FCAN_IS_OSC 0
 
-// CANCKS: ECANx Module Clock (FCAN) Source Select Bit - rnn13
-#ifdef __dsPIC33E__ // Only enable for certain chips.
-# define ECAN_FCAN_IS_2FP 1 // FCAN is equal to 2 * FP
-# define ECAN_FCAN_IS_FP  0 // FCAN is equal to FP
-#endif
+// The CANCKS bit was returned to the "E" family in the same register
+// (CiCTRL1) and bit location (bit 11).  See the revision history entry in
+// the ECAN chapter of the E-family FRM for March 2011.  However, the
+// meaning of the CANCKS bit is now completely different than original
+// CANCKS bit used in 2008-2009 [JWB May 2014]
+//
+// For certain silicon revisions, the CANCKS bit does not behave in the way
+// that the datasheet specifies. Based on silicon issue 11 of document
+// DS80000526E, it functions reverse of its intended operation for a certain
+// subset of this family. [Ryan Taylor; November 2015]
 
+#if defined(__dsPIC33EP512GP806__)
+
+#define ECAN_FCAN_IS_2FP 0          // FCAN is equal to 2 * FP
+#define ECAN_FCAN_IS_FP 1          // FCAN is equal to FP
+
+#elif defined(__dsPIC33E__)
+
+# define ECAN_FCAN_IS_2FP 1         // FCAN is equal to 2 * FP
+# define ECAN_FCAN_IS_FP  0         // FCAN is equal to FP
+
+#endif
 
 //CiCFG2 register  (Baud rate config 2 register)
 #define ECAN_NO_WAKEUP 0x4000
@@ -259,10 +285,23 @@ typedef struct _ECANMSG {
   ECANW7  w7;
 } ECANMSG;
 
+// dsPIC33EP512GP806 must be handled differently than the rest of the family
+// due to errata in the DMA subsystem (see document DS80000526E - silicon issue
+// 15). DPRAM must be used to ensure that the DMA cannot be held in the "OFF"
+// state by the system arbiter. [Ryan Taylor; November 2015]
+#if defined(__dsPIC33EP512GP806__)
+
+void formatStandardDataFrameECAN (__eds__ ECANMSG* p_ecanmsg, uint16_t u16_id, uint8_t u8_len);
+void formatExtendedDataFrameECAN (__eds__ ECANMSG* p_ecanmsg, uint32_t u32_id, uint8_t u8_len);
+uint32_t getIdExtendedDataFrameECAN (__eds__ ECANMSG* p_ecanmsg);
+
+#else
 
 void formatStandardDataFrameECAN (ECANMSG* p_ecanmsg, uint16_t u16_id, uint8_t u8_len);
 void formatExtendedDataFrameECAN (ECANMSG* p_ecanmsg, uint32_t u32_id, uint8_t u8_len);
 uint32_t getIdExtendedDataFrameECAN (ECANMSG* p_ecanmsg);
+
+#endif
 
 #define ECAN_1TIME_HEADER_DEFS
 #endif
@@ -281,6 +320,7 @@ inline static void CHANGE_MODE_ECAN1(uint16_t u16_mode) {
  */
 #define GET_FIFO_READBUFFER_ECAN1() (C1FIFO & 0x1F)
 
+void configBaudECAN1(void);
 void clrRxFullFlagECAN1(uint8_t u8_bufNum);
 uint8_t getRxFullFlagECAN1(uint8_t u8_bufNum);
 void clrRxFullOvfFlagsECAN1(void);
@@ -294,6 +334,12 @@ uint8_t getTxInProgressECAN1(uint8_t u8_bufNum);
 
 
 #endif // #if (NUM_ECAN_MODS >= 1)
+
+
+
+
+
+
 
 /*
  * "Copyright (c) 2008 Robert B. Reese, Bryan A. Jones, J. W. Bruce ("AUTHORS")"
@@ -329,6 +375,7 @@ uint8_t getTxInProgressECAN1(uint8_t u8_bufNum);
 #include <stdint.h>
 #include "pic24_unions.h"
 #include "pic24_chip.h"
+#include "pic24_clockfreq.h"
 
 // Only include if this ECAN Module exists.
 #if (NUM_ECAN_MODS >= 2)
@@ -350,16 +397,41 @@ uint8_t getTxInProgressECAN1(uint8_t u8_bufNum);
 #define ECAN_MODE_CONFIGURE 4
 #define ECAN_LISTEN_ALL_MESSAGES 7
 
-// Deprecated & Removed from PIC24 Datasheet - rnn13
+// CANCKS in CiCTRL1 ECAN Register
+// CANCKS: ECANx Module Clock (FCAN) Source Select Bit
+//
+// The CANCKS bit was defined in the CiCTRL1 register when the initial PIC24
+// library and text was written (2008).  The following definitions were used
+// for the CANCKS bit.  In May 2009, datasheet revision history says
+//      Changed bit 11 in the ECAN Control Register 1 (CiCTRL1) to Reserved
+//      (see Register 19-1).
+// Thus, these definitions are no longer needed in the non-E families of the
+// PIC24/dsPIC   [JWB May 2014]
 //#define ECAN_FCAN_IS_FCY 1
 //#define ECAN_FCAN_IS_OSC 0
 
-// CANCKS: ECANx Module Clock (FCAN) Source Select Bit - rnn13
-#ifdef __dsPIC33E__ // Only enable for certain chips.
-# define ECAN_FCAN_IS_2FP 1 // FCAN is equal to 2 * FP
-# define ECAN_FCAN_IS_FP  0 // FCAN is equal to FP
-#endif
+// The CANCKS bit was returned to the "E" family in the same register
+// (CiCTRL1) and bit location (bit 11).  See the revision history entry in
+// the ECAN chapter of the E-family FRM for March 2011.  However, the
+// meaning of the CANCKS bit is now completely different than original
+// CANCKS bit used in 2008-2009 [JWB May 2014]
+//
+// For certain silicon revisions, the CANCKS bit does not behave in the way
+// that the datasheet specifies. Based on silicon issue 11 of document
+// DS80000526E, it functions reverse of its intended operation for a certain
+// subset of this family. [Ryan Taylor; November 2015]
 
+#if defined(__dsPIC33EP512GP806__)
+
+#define ECAN_FCAN_IS_2FP 0          // FCAN is equal to 2 * FP
+#define ECAN_FCAN_IS_FP 1          // FCAN is equal to FP
+
+#elif defined(__dsPIC33E__)
+
+# define ECAN_FCAN_IS_2FP 1         // FCAN is equal to 2 * FP
+# define ECAN_FCAN_IS_FP  0         // FCAN is equal to FP
+
+#endif
 
 //CiCFG2 register  (Baud rate config 2 register)
 #define ECAN_NO_WAKEUP 0x4000
@@ -556,10 +628,23 @@ typedef struct _ECANMSG {
   ECANW7  w7;
 } ECANMSG;
 
+// dsPIC33EP512GP806 must be handled differently than the rest of the family
+// due to errata in the DMA subsystem (see document DS80000526E - silicon issue
+// 15). DPRAM must be used to ensure that the DMA cannot be held in the "OFF"
+// state by the system arbiter. [Ryan Taylor; November 2015]
+#if defined(__dsPIC33EP512GP806__)
+
+void formatStandardDataFrameECAN (__eds__ ECANMSG* p_ecanmsg, uint16_t u16_id, uint8_t u8_len);
+void formatExtendedDataFrameECAN (__eds__ ECANMSG* p_ecanmsg, uint32_t u32_id, uint8_t u8_len);
+uint32_t getIdExtendedDataFrameECAN (__eds__ ECANMSG* p_ecanmsg);
+
+#else
 
 void formatStandardDataFrameECAN (ECANMSG* p_ecanmsg, uint16_t u16_id, uint8_t u8_len);
 void formatExtendedDataFrameECAN (ECANMSG* p_ecanmsg, uint32_t u32_id, uint8_t u8_len);
 uint32_t getIdExtendedDataFrameECAN (ECANMSG* p_ecanmsg);
+
+#endif
 
 #define ECAN_1TIME_HEADER_DEFS
 #endif
@@ -578,6 +663,7 @@ inline static void CHANGE_MODE_ECAN2(uint16_t u16_mode) {
  */
 #define GET_FIFO_READBUFFER_ECAN2() (C2FIFO & 0x1F)
 
+void configBaudECAN2(void);
 void clrRxFullFlagECAN2(uint8_t u8_bufNum);
 uint8_t getRxFullFlagECAN2(uint8_t u8_bufNum);
 void clrRxFullOvfFlagsECAN2(void);
@@ -591,4 +677,10 @@ uint8_t getTxInProgressECAN2(uint8_t u8_bufNum);
 
 
 #endif // #if (NUM_ECAN_MODS >= 2)
+
+
+
+
+
+
 

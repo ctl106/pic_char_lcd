@@ -40,7 +40,7 @@
 extern "C" {
 #endif
 
-/// Number of for loop iterations which equal a timeout for the PIC.
+/// Number of for loop iterations which equal a timeout for the microcontroller.
 ///     # loops   =      instructions/sec * loops/instruction * seconds
 #define RECEIVE_TIMEOUT (FCY              * 1/20              * 0.1)
 
@@ -68,14 +68,14 @@ void testOutChar(uint8_t c);
 void
 initDataXfer();
 
-#if defined(__PIC__) || defined(__DOXYGEN__) || defined(UNIT_TESTS)
-/** Specify a variable to be sent or received.
+#if defined(MICROCONTROLLER) || defined(__DOXYGEN__) || defined(UNIT_TESTS)
+/** Specify a variable to be sent or received. <b>uC only.</b>
  *  \param u_varIndex       A value from 0-\ref NUM_XFER_VARS, unique for each var
  *  \param pv_data          A pointer to the data to be sent
  *  \param u_size           Size of the data in bytes; must be from 1 to 256.
  *  \param b_isWriteable    True if the PC is allowed to change this
  *                            variable; false otherwise. This does *NOT*
- *                            restrict the PIC to read-only access to this
+ *                            restrict the microcontroller to read-only access to this
  *                            variable.
  *  \param psz_format       printf format string to use in displaying the
  *                            Variable.
@@ -89,12 +89,12 @@ specifyVar(uint u_varIndex, volatile void* pv_data, uint u_size,
            char* psz_desc);
 
 /** For simplicity, define a macro that specifies a variable with
- *  default names.
+ *  default names. <b>uC only.</b>
  *  \param u_varIndex    A value from 0-\ref NUM_XFER_VARS, unique for each var
  *  \param data          A pointer to the data to be sent
  *  \param isWriteable   True if the PC is allowed to change this
  *                        variable; false otherwise. This does *NOT*
- *                        restrict the PIC to read-only access to this
+ *                        restrict the microcontroller to read-only access to this
  *                        variable.
  *  \param format        printf format string to use in displaying the
  *                        variable
@@ -110,24 +110,24 @@ specifyVar(u_varIndex, &data, sizeof(data), isWriteable, format, #data, desc)
 void
 sendVar(uint u_varIndex);
 
-#if !defined(__PIC__) || defined(__DOXYGEN__)
+#if !defined(MICROCONTROLLER) || defined(__DOXYGEN__)
 /** Return a string with the data stored in the given variable formatted using
- *  the format string contained in the variable. Limitation: current, use of
- *  a string (%s format) will probably crash the program. <b>PC only.</b>
+ *  the format string contained in the variable. <b>PC only.</b>
  *  \param u_varIndex The index of the variable to send; must be from 0 to
  *                    \ref NUM_XFER_VARS.
- *  \param psz_buf Buffer large enough to contain the formatted string.
+ *  \param psz_buf Buffer to contain the formatted string.
+ *  \param s_len Length of the buffer.
  *  \return On success, the total number of characters written is returned.
  *          This count does not include the additional null-character
  *          automatically appended at the end of the string.
  *          On failure, a negative number is returned.
  */
 int
-formatVar(uint u_varIndex, char* psz_buf);
+formatVar(uint u_varIndex, char* psz_buf, size_t s_len);
 #endif
 
 
-#if defined(__PIC__) || defined(__DOXYGEN__)
+#if defined(MICROCONTROLLER) || defined(__DOXYGEN__)
 /** Receive a character or a variable. Any errors that occur are
   *  reported via outString. <b>uC only.</b>
   *  \param c Pointer to space for storing the received character, if
@@ -147,6 +147,22 @@ receiveVar(char* c);
  */
 char
 inCharXfer();
+#else
+/** Receive a character or a variable. Any errors that occur are
+*  reported via outString. <b>PC only.</b>
+*  \param c_in  Character just received, which will be processed.
+*  \param pc_out Pointer to space for storing the received character, if
+*                a character was received (see pu16_index).
+*  \param pu_index A pointer to the index to the variable, if a variable was received;
+*                    \ref CHAR_RECEIVED_INDEX if a character was received.
+*  \param u64_timeMs Current system time, in ms.
+*  \param psz_error NULL if no error occurred; otherwise, a pointer to the
+*                  error string.
+*  \return True if a character or variable was received. True also implies that
+*          pu_index is valid.
+*/
+BOOL receiveVar(char c_in, char* pc_out, uint* pu_index,
+                uint64_t u64_timeMs, const char** psz_error);
 #endif
 
 
