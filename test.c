@@ -21,7 +21,5 @@ int main()
 	
 	lcd_write(dev, test, test_s-1);
 	
-	DELAY_US();
-	
 	while(1) {}
 }

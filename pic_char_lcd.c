@@ -4,8 +4,9 @@
 #include <stdio.h>		// vsnprintf()
 
 // #ifdef macro to determine library to include
-#include "lib/pic24/include/pic24_i2c.h"
-#include "lib/pic24/include/pic24_delay.h"
+//#include "lib/pic24/include/pic24_i2c.h"
+//#include "lib/pic24/include/pic24_delay.h"
+#include "pic24_all.h"
 
 // #endif
 

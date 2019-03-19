@@ -48,6 +48,9 @@
           <logicalFolder name="src" displayName="src" projectFiles="true">
             <itemPath>lib/pic24/src/pic24_i2c.c</itemPath>
             <itemPath>lib/pic24/src/pic24_util.c</itemPath>
+            <itemPath>lib/pic24/src/pic24_serial.c</itemPath>
+            <itemPath>lib/pic24/src/pic24_uart.c</itemPath>
+            <itemPath>lib/pic24/src/pic24_clockfreq.c</itemPath>
           </logicalFolder>
         </logicalFolder>
       </logicalFolder>
