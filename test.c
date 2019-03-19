@@ -6,6 +6,8 @@
 
 int main()
 {
+    configBasic(HELLO_MSG);
+    
 	lcd *dev = malloc(sizeof(lcd));
 	dev->interface = lcd_i2c1;
 	dev->address = 0x27;	// need to double check...
@@ -21,5 +23,6 @@ int main()
 	
 	lcd_write(dev, test, test_s-1);
 	
-	while(1) {}
+	while(1)
+        IDLE();
 }
