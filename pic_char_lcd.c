@@ -191,22 +191,22 @@ int lcd_is_addr_valid(lcd *dev, uint8_t addr)
 
 int lcd_is_backlight(lcd *dev)
 {
-	return lcd->config & LCD_BACKLIGHT;
+	return dev->config & LCD_BACKLIGHT;
 }
 
 int lcd_is_blink(lcd *dev)
 {
-	return lcd->config & LCD_BLINK;
+	return dev->config & LCD_BLINK;
 }
 
 int lcd_is_cursor(lcd *dev)
 {
-	return lcd->config & LCD_CURSOR;
+	return dev->config & LCD_CURSOR;
 }
 
 int lcd_is_display(lcd *dev)
 {
-	return lcd->config & LCD_DISPLAY;
+	return dev->config & LCD_DISPLAY;
 }
 
 int lcd_move_cursor(lcd *dev, uint8_t row, uint8_t col)
@@ -396,9 +396,9 @@ void lcd_set_backlight(lcd *dev, int status)
 {
 	while(is_busy(dev));
 	if(status)
-		lcd->config != LCD_BACKLIGHT;
+		dev->config != LCD_BACKLIGHT;
 	else
-		lcd->config &= ~LCD_BACKLIGHT;
+		dev->config &= ~LCD_BACKLIGHT;
 	set_v0(status);
 }
 
