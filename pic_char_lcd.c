@@ -21,8 +21,9 @@ typedef struct message
 
 
 // timing constants
-const unsigned long lcd_setup_time1		= 4500;
-const unsigned long lcd_setup_time2		= 150;
+const unsigned long lcd_setup_time1		= 15500;
+const unsigned long lcd_setup_time2		= 4500;
+const unsigned long lcd_setup_time3		= 150;
 const unsigned long lcd_enable_time1	= 1;
 const unsigned long lcd_enable_time2	= 100;
 
@@ -55,12 +56,12 @@ static void		newline(lcd *dev);
 // helper functions
 static void command(lcd *dev);	// generic low-level interface to LCD
 static void command_4bit(lcd *dev);	// 4bit interface to LCD
-static void	default_i2c_map(lcd_map map);
+static void	default_i2c_map(lcd *dev);
 static void	init_4bit(lcd *dev);
 static void	init_8bit(lcd *dev);
 static int	is_busy(lcd *dev);
 static int	is_map_valid(uint8_t mode, lcd_map map);
-static void	map_message(lcd *dev, message msg);	// for non-GPIO interfaces
+static void	map_message(lcd *dev, message *msg);	// for non-GPIO interfaces
 static void	unmap_message(lcd *dev, message msg);
 static void	newline(lcd *dev);
 static void	read_4bit(lcd *dev, uint8_t *data);
@@ -141,23 +142,26 @@ int lcd_init(lcd *dev)
 	check busy till after init is complete.
 	*/
 	
-	// generate bitmasks for enable and backlight
-	dev->e = 0x01 << dev->map.e;
-	dev->v0 = 0x01 << dev->map.v0;
-	
 	// determine size of ddram based on rows x cols
-	
+printf("Configuring i2c expander pin map\n");
 	if(!is_map_valid(dev->config&LCD_8BIT, dev->map)) {
+printf("Setting default i2c pin map\n");
 		if(dev->interface&lcd_i2c)
-			default_i2c_map(dev->map);
+			default_i2c_map(dev);
 		// if(dev->interface & lcd_spi)
 	}
 	
+	// generate bitmasks for enable and backlight
+	dev->e = 0x01 << (dev->map.e - 1);
+	dev->v0 = 0x01 << (dev->map.v0 - 1);
+	
+printf("Configuring lcd 4/8 bit mode\n");
 	if(dev->config&LCD_8BIT)
 		init_8bit(dev);
 	else
 		init_4bit(dev);
 	
+printf("Calling function_set()\n");
 	function_set(
 				dev,
 				dev->config&LCD_8BIT,
@@ -165,15 +169,18 @@ int lcd_init(lcd *dev)
 				dev->config&LCD_FONT_5x11
 				);
 				
+printf("Calling disp_on_off()\n");
 	disp_on_off(
 				dev,
 				dev->config&LCD_DISPLAY,
 				dev->config&LCD_CURSOR,
 				dev->config&LCD_BLINK
 				);
-				
+			
+printf("Calling clear_display()\n");	
 	clear_display(dev);
-				
+			
+printf("Calling entry_mode_set()\n");	
 	entry_mode_set(
 				dev,
 				dev->config&LCD_INC,
@@ -589,6 +596,7 @@ static void read_busy_addr(lcd *dev, uint8_t *busy, uint8_t *addr)
 static void write_to_ram(lcd *dev, uint8_t data)
 {
 	reset_values(dev);
+printf("Data:\t0x%02x\n", data);
 	dev->data = data;
 	dev->rs = 1; // data register selected
 	command(dev);
@@ -698,7 +706,7 @@ static void command(lcd *dev)
 static void command_4bit(lcd *dev)
 {
 	message msg;
-	map_message(dev, msg);
+	map_message(dev, &msg);
 	
 	write_4bit(dev, msg.part1);
 	read_4bit(dev, &msg.part1);
@@ -708,22 +716,22 @@ static void command_4bit(lcd *dev)
 	unmap_message(dev, msg);
 }
 
-static void default_i2c_map(lcd_map map)
+static void default_i2c_map(lcd *dev)
 {
-	map.rs = 0;
-	map.rw = 1;
-	map.e = 2;
-	map.v0 = 3;
-	map.d4 = 4;
-	map.d5 = 5;
-	map.d6 = 6;
-	map.d7 = 7;
+	dev->map.rs = 0;
+	dev->map.rw = 1;
+	dev->map.e = 2;
+	dev->map.v0 = 3;
+	dev->map.d4 = 4;
+	dev->map.d5 = 5;
+	dev->map.d6 = 6;
+	dev->map.d7 = 7;
 	
 	// unused in 4 data bit i2c mode
-	map.d0 = 0xFF;
-	map.d1 = 0xFF;
-	map.d2 = 0xFF;
-	map.d3 = 0xFF;
+	dev->map.d0 = 0xFF;
+	dev->map.d1 = 0xFF;
+	dev->map.d2 = 0xFF;
+	dev->map.d3 = 0xFF;
 }
 
 static void init_4bit(lcd *dev)
@@ -732,37 +740,42 @@ static void init_4bit(lcd *dev)
 	reset_values(dev);
 	
 	// start in 8 bit mode, x3 bursts
-	dev->data = 0x20 | LCD_8BIT;
-	map_message(dev, msg);
-	
-	write_4bit(dev, msg.part1);
-	DELAY_US(lcd_setup_time1);
-	
-	write_4bit(dev, msg.part1);
+	dev->data = 0x30;
+	map_message(dev, &msg);
 	DELAY_US(lcd_setup_time1);
 	
 	write_4bit(dev, msg.part1);
 	DELAY_US(lcd_setup_time2);
 	
+	write_4bit(dev, msg.part1);
+	DELAY_US(lcd_setup_time2);
+	
+	write_4bit(dev, msg.part1);
+	DELAY_US(lcd_setup_time3);
+	
 	// aaand finally set to 4bit mode
-	dev->data = 0x20 | LCD_4BIT;
-	map_message(dev, msg);
+	dev->data = 0x20;
+	map_message(dev, &msg);
 	write_4bit(dev, msg.part1);
 }
 
 static void init_8bit(lcd *dev)
 {
-	function_set(dev, LCD_8BIT, 0, 0);
 	DELAY_US(lcd_setup_time1);
-	
 	function_set(dev, LCD_8BIT, 0, 0);
 	DELAY_US(lcd_setup_time2);
+	
+	function_set(dev, LCD_8BIT, 0, 0);
+	DELAY_US(lcd_setup_time3);
 	
 	function_set(dev, LCD_8BIT, 0, 0);
 }
 
 int is_busy(lcd *dev)
 {
+    DELAY_US(lcd_setup_time2);
+    return 0;
+    
 	uint8_t busy;
 	read_busy_addr(dev, &busy, NULL);
 	return (int)busy;
@@ -791,41 +804,43 @@ static int is_map_valid(uint8_t mode, lcd_map map)
 	}
 }
 
-static void map_message(lcd *dev, message msg)
+static void map_message(lcd *dev, message *msg)
 {
-	msg.part1 = 0x00;
-	msg.part2 = 0x00;
+	msg->part1 = 0x00;
+	msg->part2 = 0x00;
 	
 	if(dev->data & 0x80)
-		msg.part1 |= 0x01 << dev->map.d7;
+		msg->part1 |= 0x01 << dev->map.d7;
 	if(dev->data & 0x40)
-		msg.part1 |= 0x01 << dev->map.d6;
+		msg->part1 |= 0x01 << dev->map.d6;
 	if(dev->data & 0x20)
-		msg.part1 |= 0x01 << dev->map.d5;
+		msg->part1 |= 0x01 << dev->map.d5;
 	if(dev->data & 0x10)
-		msg.part1 |= 0x01 << dev->map.d4;
+		msg->part1 |= 0x01 << dev->map.d4;
 	if(dev->data & 0x08)
-		msg.part2 |= 0x01 << dev->map.d7;
+		msg->part2 |= 0x01 << dev->map.d7;
 	if(dev->data & 0x04)
-		msg.part2 |= 0x01 << dev->map.d6;
+		msg->part2 |= 0x01 << dev->map.d6;
 	if(dev->data & 0x02)
-		msg.part2 |= 0x01 << dev->map.d5;
+		msg->part2 |= 0x01 << dev->map.d5;
 	if(dev->data & 0x01)
-		msg.part2 |= 0x01 << dev->map.d4;
+		msg->part2 |= 0x01 << dev->map.d4;
 	
 	if(dev->rs) {
-		msg.part1 |= 0x01 << dev->map.rs;
-		msg.part2 |= 0x01 << dev->map.rs;
+		msg->part1 |= 0x01 << dev->map.rs;
+		msg->part2 |= 0x01 << dev->map.rs;
 	}
 	if(dev->rw) {
-		msg.part1 |= 0x01 << dev->map.rw;
-		msg.part2 |= 0x01 << dev->map.rw;
+		msg->part1 |= 0x01 << dev->map.rw;
+		msg->part2 |= 0x01 << dev->map.rw;
 	}
 	
 	if(dev->config & LCD_BACKLIGHT) {
-		msg.part1 |= 0x01 << dev->map.v0;
-		msg.part2 |= 0x01 << dev->map.v0;
+		msg->part1 |= 0x01 << dev->map.v0;
+		msg->part2 |= 0x01 << dev->map.v0;
 	}
+    
+//printf("Message: 0x%02x\tpart1: 0x%02x\tpart2: 0x%02x\n", dev->data, msg->part1, msg->part2);
 }
 
 static void unmap_message(lcd *dev, message msg)
@@ -849,14 +864,15 @@ static void unmap_message(lcd *dev, message msg)
 static void read_4bit(lcd *dev, uint8_t *data)
 {
 	if(dev->interface == lcd_i2c1)
-		read1I2C1((dev->address << 1) + 1, data);
+		read1I2C1(dev->address, data);
 	else if(dev->interface == lcd_i2c2)
-		read1I2C2((dev->address << 1) + 1, data);
+		read1I2C2(dev->address, data);
 }
 
 static void write_4bit(lcd *dev, uint8_t data)
 {
-	data &= ~dev->e;
+printf("write_4bit():\thex: 0x%02x\n", data);
+	data &= ~(dev->e);
 	send_byte(dev, data);
 	DELAY_US(lcd_enable_time1);
 	
@@ -864,7 +880,7 @@ static void write_4bit(lcd *dev, uint8_t data)
 	send_byte(dev, data);
 	DELAY_US(lcd_enable_time1);
 	
-	data &= ~dev->e;
+	data &= ~(dev->e);
 	send_byte(dev, data);
 	DELAY_US(lcd_enable_time2);
 }
@@ -879,9 +895,9 @@ static void reset_values(lcd *dev)
 static void send_byte(lcd *dev, uint8_t data)
 {
 	if(dev->interface == lcd_i2c1)
-		write1I2C1(dev->address << 1, data);
+		write1I2C1(dev->address, data);
 	else if(dev->interface == lcd_i2c2)
-		write1I2C2(dev->address << 1, data);
+		write1I2C2(dev->address, data);
 }
 
 static void set_v0(lcd *dev, int status)
